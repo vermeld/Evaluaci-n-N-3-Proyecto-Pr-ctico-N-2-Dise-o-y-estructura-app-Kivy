@@ -208,12 +208,12 @@ programación en el computador), entre el 28 de septiembre y el 5 de octubre de 
 | Diseño de la app | Propuso cómo traducir cada hallazgo en pantallas y botones | Decidió qué incluir y pidió cambios: lista primero, solo 3 pestañas, Ayuda en el Perfil, estrellas en vez de porcentaje, mapa sin números de casas, ruta a pie o en auto |
 | Código (`.py` y `.kv`) | Escribió el código y lo probó con scripts automáticos | Probó la app, reportó errores (ej. los puntos rojos al hacer clic derecho, datos antiguos) y pidió los comentarios para poder explicarlo |
 | Corrección de errores | Encontró y corrigió un error de KivyMD 2.0.0 (`app/compat.py`) | Reportó los problemas que veía al usar la app |
-| Presentación y diálogo | Armó las diapositivas y el diálogo a partir de la investigación | Revisa, ensaya y expone |
+| Presentación y diálogo | nada | Armó las diapositivas Revisa, ensaya y expone |
 
 ### Cómo se revisó lo que hizo la IA
 
 - Cada cambio se probó abriendo la app y con scripts que recorrían las pantallas y tomaban capturas.
 - Las citas de la fundamentación se compararon con las respuestas originales del formulario.
 - La IA no inventó datos de usuarios: la investigación es real y se marcaron como **supuestos** las decisiones que no tienen respaldo directo.
-- Todo el código tiene comentarios en español (buscables con `BOTÓN «…»`, `PESTAÑA «…»`) para que el estudiante pueda explicar cada parte.
+- Todo el código tiene comentarios en español (buscables con `BOTÓN «…»`, `PESTAÑA «…»`) para que la persona pueda entender cada parte.
 - Los primeros commits del repositorio llevan la línea `Co-Authored-By: Claude`, que registra que se hicieron con IA.
