@@ -150,8 +150,10 @@
                         icono: 'map-marker-radius'
                         texto: 'Rige en todo Temuco y Padre Las Casas, no solo en algunos sectores.'
 
+                # ORIGEN DEL DATO: dice si el episodio vino de la configuración remota
+                # (GitHub), de la última guardada o del valor por defecto del código.
                 TextoSuave:
-                    text: 'Maqueta: el episodio de hoy es un dato de ejemplo. En la versión final se obtiene del pronóstico oficial y llega como aviso al celular. Las reglas exactas y horarios los informa la autoridad.'
+                    text: 'Episodio de hoy: configuración ' + app.origen_config + ('. Llega desde el archivo remote_config.json del repositorio en GitHub.' if app.origen_config == 'remota' else '. Sin conexión: se usa el último valor conocido.') + ' Las reglas exactas y horarios los informa la autoridad.'
 
                 # BOTÓN «Ver pronóstico oficial»: abre airechile.mma.gob.cl en el navegador.
                 BotonAncho:

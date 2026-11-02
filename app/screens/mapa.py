@@ -298,6 +298,9 @@ class PantallaMapa(MDScreen):
         p = app.buscar(punto_id)
         self.terminar_navegacion()
         self.seleccionar(punto_id, centrar=False)
+        # EVENTO QUE DISPARA LA NOTIFICACIÓN «¡Llegaste!» (el texto está en config.py).
+        # en_app=False porque dentro de la app ya se abre el diálogo de abajo.
+        app.notificar("¡Llegaste!", config.NOTIF_LLEGADA % p["nombre"], en_app=False)
 
         def responder(hay):
             self._dialogo.dismiss()

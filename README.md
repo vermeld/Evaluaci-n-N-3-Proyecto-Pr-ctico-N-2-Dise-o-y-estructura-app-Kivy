@@ -1,8 +1,13 @@
 # Pellet al Día
 
 Dónde hay pellet o leña seca, y alertas del PDA, en Temuco y Padre Las Casas.
-Maqueta funcional para **TINF1119 Desarrollo Móvil (A+S)**, evaluación E2, hecha
-con **Kivy + KivyMD**. Proyecto individual de Gabriel Neculman.
+App para **TINF1119 Desarrollo Móvil**, Evaluación N°3 (Proyecto Práctico N°2:
+diseño y estructura app Kivy), hecha con **Kivy + KivyMD**. Proyecto individual de
+Gabriel Neculman.
+
+**Servicios integrados:** autenticación (registro y login) · persistencia en JSON ·
+notificaciones · configuración remota. Detalle y ubicación en el código en
+[Servicios implementados](#servicios-implementados).
 
 ## Problema que resuelve
 
@@ -27,19 +32,86 @@ resumen de la investigación está en
 [FUNDAMENTACION-UX-UI.md](FUNDAMENTACION-UX-UI.md) y la evidencia (pauta de entrevista, respuestas y plantilla de investigación)
 se entrega aparte.
 
-## Ejecutar
+## Requisitos e instalación
 
-Requiere Python 3.10 o superior y **conexión a internet** para descargar el mapa y las rutas.
+- **Python 3.10, 3.11 o 3.12** (probado con Python 3.12 en Windows 11).
+- **Git** para clonar el repositorio.
+- **Internet** para el mapa, las rutas y la configuración remota. Sin internet la app
+  igual abre: usa la última configuración guardada y rutas en línea recta.
+
+Paso a paso (en una terminal; en Windows, PowerShell o CMD):
 
 ```bash
+# 1. Clonar el repositorio y entrar a la carpeta
+git clone https://github.com/vermeld/Evaluaci-n-N-3-Proyecto-Pr-ctico-N-2-Dise-o-y-estructura-app-Kivy.git
+cd Evaluaci-n-N-3-Proyecto-Pr-ctico-N-2-Dise-o-y-estructura-app-Kivy
+
+# 2. (Recomendado) crear un entorno virtual
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS / Linux
+
+# 3. Instalar las dependencias
 python -m pip install -r requirements.txt
+```
+
+Dependencias (`requirements.txt`): `kivy` 2.3, `kivymd` 2.0.0, `mapview` (mapa)
+y `plyer` (GPS en Android y notificaciones).
+
+## Cómo ejecutarla
+
+```bash
 python main.py
 ```
 
-En escritorio la ventana simula un celular (400×800). Como no hay GPS, tu
-ubicación parte en la Plaza Aníbal Pinto. Con **doble toque** en el mapa la
-mueves, y durante una ruta el botón **«Simular caminata»** hace avanzar tu punto
-por el camino. En Android la app usa el GPS real (`plyer`).
+1. Se abre una ventana con forma de celular (400×800).
+2. Toca **«Crear una cuenta»** y regístrate (las cuentas de ejemplo no tienen contraseña).
+3. Entras a la **Lista**. Arriba está el aviso del PDA, que llega por **configuración
+   remota**, y al abrir sale una **notificación** de Windows si hay restricción.
+4. Cierra la app y vuelve a abrirla: la sesión, los puntos, reportes y opiniones
+   siguen ahí porque se guardan en **JSON**.
+
+En escritorio no hay GPS: tu ubicación parte en la Plaza Aníbal Pinto. Con
+**doble toque** en el mapa la mueves, y durante una ruta el botón **«Simular
+caminata»** hace avanzar tu punto. En Android la app usa el GPS real (`plyer`).
+
+Para la demo hay dos botones de apoyo: **«Simular otro día (demo)»** en la pantalla
+del PDA y **«Restaurar datos de ejemplo»** en Perfil › Ayuda.
+
+## Servicios implementados
+
+| Servicio | Qué hace | Dónde está |
+|---|---|---|
+| **Autenticación** | Registro e inicio de sesión. La contraseña se valida (6 caracteres o más, repetida igual) y se guarda como hash **PBKDF2-SHA256 con sal**, nunca en texto plano. El login compara con `hmac.compare_digest`. La sesión queda abierta al reabrir. | Validación: `validar_registro()` en `app/cuentas.py`. Hash: `_hash()`. Registro y login: `Cuentas.registrar()` y `Cuentas.entrar()`. Pantallas: `app/screens/registro.py` (`crear()`) y `app/screens/entrar.py` (`entrar()`) |
+| **Persistencia JSON** | Los puntos, reportes, opiniones y votos se guardan en `puntos_temuco_v2.json`. Las cuentas y la sesión, en `usuarios.json`. Al reabrir la app se leen de nuevo. | `PelletApp.cargar()` y `PelletApp.guardar()` en `app/pelletapp.py`. Cuentas: `Cuentas.guardar()` en `app/cuentas.py`. Los archivos quedan en `App.user_data_dir` (en Windows, `%APPDATA%\pellet\`) |
+| **Notificaciones** | Notificación del sistema (plyer) disparada por eventos de la app: **(1)** al abrir, si el PDA del día tiene alerta, preemergencia o emergencia; **(2)** al cambiar de episodio con «Simular otro día»; **(3)** al **llegar** al punto durante la navegación. También se muestra dentro de la app (Snackbar). | `notificar()` en `app/notificaciones.py`. Eventos: `al_recibir_config()` y `notificar_pda()` en `app/pelletapp.py`; `_llegar()` en `app/screens/mapa.py`; `simular_otro_dia()` en `app/screens/pda.py`. Texto y duración: `NOTIF_LLEGADA` y `NOTIF_SEGUNDOS` en `app/config.py` |
+| **Configuración remota** | Al abrir, la app descarga [`remote_config.json`](remote_config.json) desde este repositorio en GitHub. Trae el **episodio del PDA del día** y un **mensaje** para todos. Si cambias el archivo en GitHub, la app lo muestra al volver a abrirse, sin tocar el código. Sin internet usa la última configuración guardada (`config_remota.json`) o los valores por defecto. La pantalla del PDA dice de dónde salió el dato. | `ConfigRemota` en `app/remoto.py` (`descargar()`, `validar()`). URL y valores por defecto: `REMOTO_URL` y `REMOTO_POR_DEFECTO` en `app/config.py`. Se pide en `PelletApp.on_start()` y se aplica en `aplicar_config_remota()` |
+
+Ejemplo de `remote_config.json`:
+
+```json
+{
+  "episodio_pda": "preemergencia",
+  "mensaje": "Recuerda: con preemergencia no se puede usar leña. Revisa dónde hay pellet."
+}
+```
+
+`episodio_pda` acepta `bueno`, `alerta`, `preemergencia` o `emergencia`. Si llega un
+valor inválido se ignora y se mantiene el anterior. GitHub puede tardar unos
+minutos en entregar la versión nueva del archivo.
+
+### Quién llama a quién
+
+```
+main.py ─▶ app/pelletapp.py (PelletApp)
+             ├─ carga los .kv de app/kv/ y crea las pantallas de app/screens/
+             ├─ cargar() / guardar() ─▶ puntos_temuco_v2.json
+             ├─ cuentas.py ─▶ usuarios.json            (registro, login, reputación)
+             ├─ remoto.py  ─▶ remote_config.json en GitHub ─▶ config_remota.json (caché)
+             ├─ notificaciones.py ─▶ plyer.notification
+             └─ confianza.py, pda.py, ubicacion.py
+           app/screens/mapa.py ─▶ rutas.py (OSRM) ─▶ geo.py ─▶ notificación «¡Llegaste!»
+```
 
 ## Cuentas, opiniones y confiabilidad
 
@@ -121,13 +193,15 @@ más 6 pantallas secundarias. Todas están en un `MDScreenManager`.
 - Las horas se validan con formato `HH:MM`.
 - Antes de publicar o de cambiar el estado de un punto, la app muestra un diálogo de confirmación.
 
-## Estructura
+## Estructura del proyecto
 
 ```
 pellet/
 ├── main.py                     # punto de entrada
 ├── requirements.txt
 ├── README.md
+├── USO_IA.md                   # declaración de uso de inteligencia artificial
+├── remote_config.json          # configuración remota que lee la app desde GitHub
 ├── FUNDAMENTACION-UX-UI.md     # fundamentación del diseño con evidencia de usuarios
 ├── assets/                     # íconos del mapa (pines, "tú")
 ├── tools/generar_iconos.py     # genera los PNG de assets/
@@ -135,11 +209,14 @@ pellet/
 └── app/
     ├── pelletapp.py            # MDApp: build(), ScreenManager, barra inferior, datos, acciones
     ├── cuentas.py              # registro, login (hash PBKDF2), reputación y niveles
-    ├── confianza.py            # % de confiabilidad de cada punto y promedio de estrellas
-    ├── config.py               # sectores de Temuco, mapa, colores
+    ├── confianza.py            # estrellas de confiabilidad de cada punto
+    ├── config.py               # sectores, mapa, colores, URL remota, textos de notificación
+    ├── remoto.py               # configuración remota (descarga, validación y caché)
+    ├── notificaciones.py       # notificaciones del sistema (plyer)
+    ├── pda.py                  # niveles del PDA y qué hacer en cada uno
     ├── data.py                 # puntos, vecinos, reportes y opiniones de ejemplo (ficticios)
     ├── mapa.py                 # MapView, pines, capa de la ruta
-    ├── rutas.py                # ruta a pie (OSRM)
+    ├── rutas.py                # ruta a pie o en auto (OSRM)
     ├── ubicacion.py            # GPS (Android) o ubicación simulada
     ├── geo.py                  # distancias y avance sobre la ruta
     ├── utils.py                # formato de fecha, dinero y textos de un punto
@@ -150,8 +227,8 @@ pellet/
 ```
 
 La **interfaz** está en los `.kv` y la **lógica** (filtros, validación, rutas,
-eventos) en los `.py`. Los datos se guardan en `puntos_temuco_v2.json`, dentro de
-`App.user_data_dir` (esto no se evalúa en la E2).
+eventos) en los `.py`. Cada pantalla tiene su clase en `app/screens/` y su
+interfaz en `app/kv/`.
 
 ## Calidad del aire (PDA)
 
@@ -160,9 +237,10 @@ Alerta ambiental»**). Al tocarlo se abre una pantalla con qué hacer, los nivel
 del PDA, la aclaración de que rige en todo Temuco y Padre Las Casas, y un botón
 al pronóstico oficial (airechile.mma.gob.cl).
 
-En la maqueta el episodio es un **dato de ejemplo**, y el botón «Simular otro
-día (demo)» lo cambia. En la versión final se obtendría del pronóstico oficial y
-llegaría como notificación, algo que queda fuera del alcance de la E2.
+El episodio del día llega por **configuración remota** (`remote_config.json` en
+GitHub) y, si hay restricción, la app envía una **notificación**. Para la demo, el
+botón «Simular otro día (demo)» cambia el episodio y vuelve a notificar. En una
+versión real, el archivo remoto se actualizaría cada día con el pronóstico oficial.
 
 ## Guía para leer el código
 
@@ -188,32 +266,27 @@ o `PESTAÑA «Mapa»`.
 |---|---|---|---|---|---|
 | ![](docs/capturas/9_entrar.png) | ![](docs/capturas/10_crear_cuenta.png) | ![](docs/capturas/11_opiniones.png) | ![](docs/capturas/12_perfil.png) | ![](docs/capturas/13_confiabilidad.png) | ![](docs/capturas/14_confiabilidad_baja.png) |
 
+## Dificultades y cómo se resolvieron
+
+| Dificultad | Solución |
+|---|---|
+| Con KivyMD 2.0.0 la app se caía al abrir en algunas tarjetas de video («FBO Initialization failed: Incomplete attachment»), porque el efecto *ripple* se crea con alto 0. | Parche en `app/compat.py` que fuerza un tamaño mínimo de 1×1. Se aplica al inicio de `pelletapp.py`. |
+| VS Code usaba otro Python, sin KivyMD instalado (`ModuleNotFoundError: kivymd`). | Elegir el intérprete correcto en VS Code e instalar `requirements.txt` en ese Python. |
+| Las teselas del mapa de CARTO empezaron a pedir una clave de pago. | Cambio a Esri *World Street Map*, que además muestra solo calles (sin números ni íconos de comercios). |
+| La caché del mapa se guardaba en una carpeta relativa y fallaba según desde dónde se abría la app. | Se pasa `cache_dir` dentro de `user_data_dir`. |
+| Clic derecho dejaba puntos rojos en la pantalla (Kivy simula multitáctil). | `Config.set("input", "mouse", "mouse,multitouch_on_demand")` en `main.py`, antes de crear la ventana. |
+| El símbolo ★ no existe en la fuente Roboto y salía como un cuadro. | Se usan íconos de Material Design (`star`, `star-half-full`). |
+| Los datos de ejemplo quedaban «viejos» (todo en ámbar) días después. | Botón «Restaurar datos de ejemplo» que vuelve a crear los puntos con horas recientes. |
+| GitHub *raw* responde el JSON como texto plano y además lo guarda en caché. | `remoto.py` convierte el texto con `json.loads` y agrega `?t=<hora>` a la URL para pedir la versión nueva. |
+| Sin internet, la configuración remota no llega. | Se guarda la última recibida en `config_remota.json` y, si nunca llegó, se usan los valores de `REMOTO_POR_DEFECTO`. |
+| La extensión de Kivy de VS Code marcaba error en los `.kv` («Kivy files require #:kivy»). | Se agregó la cabecera `#:kivy 2.3.0` en cada `.kv`. |
+
 ## Créditos
 
 - Mapa: Esri World Street Map (fuentes: Esri, HERE, Garmin y colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright)).
 - Rutas: [OSRM](https://project-osrm.org/) (servidores de routing.openstreetmap.de, perfiles peatonal y de auto).
 
-## Declaración de uso de IA
+## Uso de inteligencia artificial
 
-**Herramienta:** Claude, de Anthropic, usada a través de Claude Code (asistente de
-programación en el computador), entre el 28 de septiembre y el 5 de octubre de 2026.
-
-### Qué se hizo con IA y qué hizo el estudiante
-
-| Parte del trabajo | Con IA (Claude) | Del estudiante |
-|---|---|---|
-| Idea y problema | No | Idea de la app, elección del problema (pellet y PDA en Temuco) y el pitch inicial |
-| Investigación con usuarios | No | Pauta de entrevista de 15 preguntas, formulario de Google y respuestas de 3 personas reales |
-| Fundamentación UX/UI | Ordenó las respuestas en hallazgos, matriz y supuestos, y redactó el documento | Aportó los datos y revisó que las citas fueran textuales |
-| Diseño de la app | Propuso cómo traducir cada hallazgo en pantallas y botones | Decidió qué incluir y pidió cambios: lista primero, solo 3 pestañas, Ayuda en el Perfil, estrellas en vez de porcentaje, mapa sin números de casas, ruta a pie o en auto |
-| Código (`.py` y `.kv`) | Escribió el código y lo probó con scripts automáticos | Probó la app, reportó errores (ej. los puntos rojos al hacer clic derecho, datos antiguos) y pidió los comentarios para poder explicarlo |
-| Corrección de errores | Encontró y corrigió un error de KivyMD 2.0.0 (`app/compat.py`) | Reportó los problemas que veía al usar la app |
-| Presentación y diálogo | nada | Armó las diapositivas Revisa, ensaya y expone |
-
-### Cómo se revisó lo que hizo la IA
-
-- Cada cambio se probó abriendo la app y con scripts que recorrían las pantallas y tomaban capturas.
-- Las citas de la fundamentación se compararon con las respuestas originales del formulario.
-- La IA no inventó datos de usuarios: la investigación es real y se marcaron como **supuestos** las decisiones que no tienen respaldo directo.
-- Todo el código tiene comentarios en español (buscables con `BOTÓN «…»`, `PESTAÑA «…»`) para que la persona pueda entender cada parte.
-- Los primeros commits del repositorio llevan la línea `Co-Authored-By: Claude`, que registra que se hicieron con IA.
+La declaración completa (herramienta, modelo, prompts, outputs, ajustes y
+reflexión) está en [USO_IA.md](USO_IA.md).

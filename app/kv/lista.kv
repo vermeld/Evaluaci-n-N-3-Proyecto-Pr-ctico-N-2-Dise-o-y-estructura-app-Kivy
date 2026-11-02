@@ -26,6 +26,14 @@
             # Aviso del PDA arriba de todo: 3 de 3 encuestados no se enteran a tiempo
             AvisoPDA:
 
+            # MENSAJE REMOTO: texto que llega desde remote_config.json en GitHub.
+            # Si viene vacío, se oculta (alto 0).
+            TextoSuave:
+                text: app.mensaje_remoto
+                opacity: 1 if app.mensaje_remoto else 0
+                size_hint_y: None
+                height: self.texture_size[1] if app.mensaje_remoto else 0
+
             # Texto que dice cuántos puntos tienen stock (lo escribe lista.py).
             TextoSuave:
                 id: resumen

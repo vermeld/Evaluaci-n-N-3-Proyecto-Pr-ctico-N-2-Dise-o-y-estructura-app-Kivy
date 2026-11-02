@@ -40,6 +40,7 @@ class PantallaPDA(MDScreen):
         app = App.get_running_app()
         app.episodio = pda.siguiente(app.episodio)
         self.mostrar()
+        app.notificar_pda()  # el cambio de episodio también dispara la notificación
 
     # BOTÓN «Ver pronóstico oficial»: abre la página en el navegador.
     def abrir_oficial(self):

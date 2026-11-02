@@ -25,6 +25,8 @@ from kivymd.uix.dialog import (
 from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
 
 from . import compat, confianza, config, pda
+from .notificaciones import notificar
+from .remoto import ConfigRemota
 from .cuentas import Cuentas
 from .data import datos_iniciales
 from .mapa import MapaPellet
@@ -82,12 +84,15 @@ class PelletApp(MDApp):
     pos_usuario = ListProperty(list(config.UBICACION_SIMULADA))
     hay_gps = BooleanProperty(False)
 
-    # Episodio del PDA de hoy (dato de ejemplo en la maqueta, ver pda.py)
-    episodio = StringProperty(config.EPISODIO_DEMO)
+    # Episodio del PDA de hoy: viene de la configuración remota (ver remoto.py)
+    episodio = StringProperty(config.REMOTO_POR_DEFECTO["episodio_pda"])
     titulo_episodio = StringProperty("")
     corto_episodio = StringProperty("")
     icono_episodio = StringProperty("alert")
     color_episodio = ListProperty([0, 0, 0, 1])
+    # Mensaje remoto para todos (vacío = no se muestra) y de dónde salió la configuración
+    mensaje_remoto = StringProperty("")
+    origen_config = StringProperty("por defecto")
 
     # Sesión: los .kv se actualizan solos cuando cambian
     con_sesion = BooleanProperty(False)
@@ -100,6 +105,10 @@ class PelletApp(MDApp):
         self.theme_cls.primary_palette = config.PALETA
 
         self.on_episodio(self, self.episodio)
+        # Configuración remota: parte con la última guardada (o la por defecto)
+        # y en on_start() se pide la versión nueva a GitHub.
+        self.remoto = ConfigRemota(self.user_data_dir)
+        self.aplicar_config_remota()
         self.archivo = os.path.join(self.user_data_dir, ARCHIVO_DATOS)
         self.puntos = self.cargar()
         self.cuentas = Cuentas(self.user_data_dir)
@@ -132,8 +141,38 @@ class PelletApp(MDApp):
         return raiz
 
     # Cuando la ventana ya está abierta: enciende el GPS (solo en el celular).
+    # También pide la configuración remota a GitHub (sin bloquear la pantalla).
     def on_start(self):
         self.ubicacion.iniciar()
+        self.remoto.descargar(self.al_recibir_config)
+
+    # ---- configuración remota y notificaciones
+
+    # Copia los valores remotos a la app: los .kv que los usan se actualizan solos.
+    def aplicar_config_remota(self):
+        self.episodio = self.remoto.get("episodio_pda")
+        self.mensaje_remoto = self.remoto.get("mensaje")
+        self.origen_config = self.remoto.origen
+
+    # Se ejecuta cuando GitHub respondió (o falló). EVENTO QUE DISPARA LA NOTIFICACIÓN
+    # DEL PDA: al abrir la app, si hoy hay restricción, avisa aunque no mires la pantalla.
+    def al_recibir_config(self, cambio):
+        if cambio:
+            self.aplicar_config_remota()
+        self.notificar_pda()
+
+    # NOTIFICACIÓN DEL PDA: solo si hay alerta, preemergencia o emergencia.
+    def notificar_pda(self):
+        if self.episodio == "bueno":
+            return
+        self.notificar("Hoy: " + self.titulo_episodio,
+                       self.corto_episodio + ". Toca el aviso del PDA para saber qué hacer.")
+
+    # Envía la notificación del sistema y, además, la muestra dentro de la app.
+    def notificar(self, titulo, mensaje, en_app=True):
+        notificar(titulo, mensaje)
+        if en_app:
+            self.avisar("%s · %s" % (titulo, mensaje))
 
     # ---- datos
 

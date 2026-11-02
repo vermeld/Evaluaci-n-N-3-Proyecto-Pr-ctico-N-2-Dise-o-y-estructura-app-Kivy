@@ -16,8 +16,22 @@ COMBUSTIBLES = {
     "ambos": "Pellet y leña seca",
 }
 
-# Episodio PDA de ejemplo al abrir la app (maqueta; ver pda.py)
-EPISODIO_DEMO = "alerta"
+# ---- configuración remota (ver remoto.py)
+# Archivo JSON publicado en el repositorio de GitHub. Si se edita en GitHub,
+# la app muestra el valor nuevo la próxima vez que se abre (sin cambiar el código).
+REMOTO_URL = ("https://raw.githubusercontent.com/vermeld/"
+              "Evaluaci-n-N-3-Proyecto-Pr-ctico-N-2-Dise-o-y-estructura-app-Kivy/"
+              "main/remote_config.json")
+REMOTO_ESPERA = 8  # segundos máximos esperando la respuesta
+# VALORES POR DEFECTO: se usan si no hay internet y nunca se descargó la configuración.
+REMOTO_POR_DEFECTO = {
+    "episodio_pda": "alerta",  # bueno, alerta, preemergencia o emergencia
+    "mensaje": "",             # aviso corto que se muestra bajo el PDA en la Lista
+}
+
+# ---- notificaciones (ver notificaciones.py)
+NOTIF_SEGUNDOS = 10  # cuánto dura la notificación en pantalla (escritorio)
+NOTIF_LLEGADA = "Estás en %s. ¿Había stock? Abre la app y cuéntale a tus vecinos."
 
 # ---- mapa
 CENTRO_TEMUCO = (-38.7390, -72.5985)
@@ -25,7 +39,7 @@ ZOOM_INICIAL = 14
 # Sin GPS (escritorio) partimos en la Plaza Aníbal Pinto.
 UBICACION_SIMULADA = (-38.73905, -72.59040)
 # Estilo de mapa limpio (Esri World Street Map): solo calles y sus nombres,
-# sin números de casas ni íconos de comercios. Ojo: el orden es {z}/{y}/{x}.
+# sin números de casas ni íconos de comercios.
 TILES_URL = ("https://server.arcgisonline.com/ArcGIS/rest/services/"
              "World_Street_Map/MapServer/tile/{z}/{y}/{x}")
 TILES_EXT = "jpg"
